@@ -1,16 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import UploadButton from "./UploadButton";
 import { trpc } from "@/app/_trpc/client";
-import { Ghost, MessageSquareIcon, Plus, TrashIcon } from "lucide-react";
+import {
+  Ghost,
+  Loader2,
+  MessageSquareIcon,
+  Plus,
+  TrashIcon,
+} from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
 
 const Dashboard = () => {
+  const [CurrdeleteingFile, setCurrdeleteingFile] = useState<string | null>(
+    null
+  );
+  const utils = trpc.useContext();
+
   const { data: files, isLoading } = trpc.getUserFiles.useQuery();
+
+  const { mutate: deleteFile, isLoading: deleteLoading } =
+    trpc.deleteFile.useMutation({
+      onSuccess: () => {
+        utils.getUserFiles.invalidate();
+      },
+      onMutate({ id }) {
+        setCurrdeleteingFile(id);
+      },
+      onSettled() {
+        setCurrdeleteingFile(null);
+      },
+    });
 
   return (
     <main className="mx-auto max-w-7xl md:p-10">
@@ -60,8 +84,16 @@ const Dashboard = () => {
                   <Button
                     size={"sm"}
                     className="w-full"
+                    onClick={() => deleteFile({ id: file.id })}
                     variant={"destructive"}>
-                    <TrashIcon className="h-4 w-4" />
+                    {
+                    CurrdeleteingFile === file.id ?  //this will show loading a particular file delete 
+                    // deleteLoading? // this will show loading in all the file
+                    (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <TrashIcon className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </li>
