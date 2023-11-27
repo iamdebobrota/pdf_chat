@@ -32,4 +32,6 @@ $ pnpm i react-dropzone
 $ npx shadcn-ui@latest add progress
  
  ---- Uploadthing.com i used instead of aws s3
- $
+ $ react-pdf
+ $ shadcn -> button, input
+
