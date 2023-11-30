@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     webpack: (config, {buildId, dev, isSErver, defaultLoader, webpack})=>{
-        config.resolve.alias.canvas=false
-        config.resolve.alias.encoding = false
+        config.resolve.alias.canvas = false;
+        config.resolve.alias.encoding = false;
+        
         return config;
     }
 };

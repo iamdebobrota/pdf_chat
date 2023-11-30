@@ -1,6 +1,10 @@
 import { db } from "@/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
+import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import { pinecone } from "@/lib/pinecone";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { PineconeStore } from "langchain/vectorstores/pinecone";
 
 const f = createUploadthing();
 
@@ -8,11 +12,11 @@ const f = createUploadthing();
 export const ourFileRouter = {
   pfdUploader: f({ pdf: { maxFileSize: "4MB" } })
     .middleware(async ({ req }) => {
-        const {getUser} =await getKindeServerSession();
-        const user =await getUser();
-        if(!user || !user?.id)throw new Error("Unauthorized");
+      const { getUser } = await getKindeServerSession();
+      const user = await getUser();
+      if (!user || !user?.id) throw new Error("Unauthorized");
 
-      return {userId: user.id };
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       const createdFile = await db.file.create({
@@ -23,8 +27,48 @@ export const ourFileRouter = {
           // url: file.url,
           url: `https://uploadthing-prod.s3.us-west-2.amazonaws.com/${file.key}`,
           uploadStatus: "PROCESSING",
-        }
-      })
+        },
+      });
+      //
+      try {
+        const response = await fetch(
+          `https://uploadthing-prod.s3.us-west-2.amazonaws.com/${file.key}`
+        );
+        const blob = await response.blob();
+        const loader = new PDFLoader(blob);
+        const pageLevelDocs = await loader.load();
+        const pageAmt = pageLevelDocs.length;
+
+        
+        //vectorize and index entire dcuemnt
+        const pineconeIndex = pinecone.Index("pdfchat");
+        const embeddings = new OpenAIEmbeddings({
+          openAIApiKey: process.env.OPENAI_API_KEY,
+        });
+        //@ts-ignore
+        await PineconeStore.fromDocuments(pageLevelDocs, embeddings, {
+          pineconeIndex,
+          namespace: createdFile.id,
+        });
+
+        await db.file.update({
+          data:{
+            uploadStatus: "SUCCESS"
+          },
+          where: {
+            id: createdFile.id,
+          }
+        })
+      } catch (e) {
+       await db.file.update({
+          data: {
+            uploadStatus: "FAILED",
+          },
+          where: {
+            id: createdFile.id,
+          }
+        })
+      }
     }),
 } satisfies FileRouter;
 

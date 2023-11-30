@@ -30,8 +30,18 @@ $ pnpm i date-fns -> to format data and timestamp
 $ pnpm i react-pdf
 $ pnpm i react-dropzone
 $ npx shadcn-ui@latest add progress
- 
- ---- Uploadthing.com i used instead of aws s3
- $ react-pdf
- $ shadcn -> button, input
 
+---- Uploadthing.com i used instead of aws s3
+$ react-pdf
+$ shadcn -> button, input
+$ pnpm i react-hook-form
+$ shadcn-textare
+$ react-textare-autosize
+
+***---Semantic query ----
+We are using pinecode.io - > its a vector database
+add pinecode api***
+
+$ pnpm i @pinecone-database/pinecone
+$ pnpm i langchain -> helps for LLM
+Copy OpenAI API Key -> 
