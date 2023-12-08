@@ -11,6 +11,7 @@ export const appRouter = router({
     if (!user?.id || !user?.email)
       throw new TRPCError({ code: "UNAUTHORIZED" });
 
+      // console.log("trpc ")
     //check if the user in the database
     const dbUser = await db.user.findFirst({
       where: {
@@ -18,6 +19,7 @@ export const appRouter = router({
       },
     });
     if (!dbUser) {
+      console.log(dbUser);
       //create the user in db
       await db.user.create({
         data: {
